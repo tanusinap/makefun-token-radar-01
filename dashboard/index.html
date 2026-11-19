@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Radar: pre-token protocols ranked by implied value</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <div class="brand"><span class="radar-dot" aria-hidden="true"></span><span>Token Radar</span></div>
+    <div class="topbar-meta" id="top-meta"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1 id="hero-title">Pre-token protocols, ranked by implied value</h1>
+      <p class="lede" id="hero-lede"></p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="controls" aria-label="Board controls">
+    <div class="ctl">
+      <label for="q">Search</label>
+      <input id="q" type="search" placeholder="Name, category or chain" autocomplete="off">
+    </div>
+    <div class="ctl">
+      <label for="cat">Category</label>
+      <select id="cat"><option value="all">All categories</option></select>
+    </div>
+    <div class="ctl">
+      <label for="sort">Sort by</label>
+      <select id="sort">
+        <option value="implied">Implied value</option>
+        <option value="tvl">TVL</option>
+        <option value="growth">7-day growth</option>
+        <option value="age">Age</option>
+        <option value="name">Name</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <span class="lbl" id="tab-lbl">Token status</span>
+      <div class="tabs" role="group" aria-labelledby="tab-lbl">
+        <button type="button" id="tab-pre" aria-pressed="true">Pre-token</button>
+        <button type="button" id="tab-live" aria-pressed="false">Live token</button>
+      </div>
+    </div>
+    <div class="count" id="count" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" id="board-panel" aria-label="Ranked board"></section>
+
+  <section class="panel model" id="model-panel" aria-label="How the model works"></section>
+
+  <footer class="foot">
+    <p>Data: DefiLlama protocol index, snapshot <span id="foot-date"></span>. Implied values are a model's
+    estimate from TVL, seven-day growth, age with no token and chain breadth, never a price or a
+    promise. A protocol the snapshot records no token for may still have one its record does not carry.
+    Farm plans are general guidance, not financial advice; never pay anyone to claim an airdrop.</p>
+  </footer>
+</main>
+
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Protocol detail"></aside>
+<div class="scrim" id="scrim" hidden></div>
+
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
