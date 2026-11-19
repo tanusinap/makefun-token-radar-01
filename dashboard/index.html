@@ -13,60 +13,63 @@
     <div class="topbar-meta" id="top-meta"></div>
   </div>
 </header>
-
 <main class="wrap">
-  <section class="hero">
-    <div>
-      <h1 id="hero-title">Pre-token protocols, ranked by implied value</h1>
-      <p class="lede" id="hero-lede"></p>
+  <section class="stats" id="stats"></section>
+  <section class="ledger" id="ledger"></section>
+  <section class="method">
+    <div class="panel" id="how-priced"></div>
+    <div class="panel" id="scatter-panel">
+      <h2>Market cap against TVL, traded tokens</h2>
+      <div id="scatter"></div>
+      <p class="note" id="scatter-note"></p>
     </div>
-    <div class="stats" id="stats"></div>
   </section>
-
-  <section class="controls" aria-label="Board controls">
-    <div class="ctl">
-      <label for="q">Search</label>
-      <input id="q" type="search" placeholder="Name, category or chain" autocomplete="off">
+  <section class="controls">
+    <div class="tabs" id="tabs"></div>
+    <div class="controls-row">
+      <label class="ctl">Plan size
+        <span class="seg" id="plan-size">
+          <button data-v="1000" class="on">$1,000</button><button data-v="10000">$10,000</button>
+        </span>
+      </label>
+      <label class="ctl">Drop share
+        <span class="seg" id="drop-share">
+          <button data-v="0.035">3.5%</button><button data-v="0.07" class="on">7%</button><button data-v="0.14">14%</button>
+        </span>
+      </label>
+      <label class="ctl grow">Search <input id="q" type="search" placeholder="protocol, category, chain" autocomplete="off"></label>
+      <label class="ctl">Category <select id="cat"><option value="all">All categories</option></select></label>
+      <label class="ctl">Chain <select id="chain"><option value="all">All chains</option></select></label>
+      <button class="reset" id="reset">Reset</button>
     </div>
-    <div class="ctl">
-      <label for="cat">Category</label>
-      <select id="cat"><option value="all">All categories</option></select>
-    </div>
-    <div class="ctl">
-      <label for="sort">Sort by</label>
-      <select id="sort">
-        <option value="implied">Implied value</option>
-        <option value="tvl">TVL</option>
-        <option value="growth">7-day growth</option>
-        <option value="age">Age</option>
-        <option value="name">Name</option>
-      </select>
-    </div>
-    <div class="ctl">
-      <span class="lbl" id="tab-lbl">Token status</span>
-      <div class="tabs" role="group" aria-labelledby="tab-lbl">
-        <button type="button" id="tab-pre" aria-pressed="true">Pre-token</button>
-        <button type="button" id="tab-live" aria-pressed="false">Live token</button>
-      </div>
-    </div>
-    <div class="count" id="count" aria-live="polite"></div>
   </section>
-
-  <section class="panel" id="board-panel" aria-label="Ranked board"></section>
-
-  <section class="panel model" id="model-panel" aria-label="How the model works"></section>
-
-  <footer class="foot">
-    <p>Data: DefiLlama protocol index, snapshot <span id="foot-date"></span>. Implied values are a model's
-    estimate from TVL, seven-day growth, age with no token and chain breadth, never a price or a
-    promise. A protocol the snapshot records no token for may still have one its record does not carry.
-    Farm plans are general guidance, not financial advice; never pay anyone to claim an airdrop.</p>
-  </footer>
+  <section class="board-head">
+    <div id="board-summary"></div>
+    <div class="board-note">Implied value = what the token would be worth if it launched, times the launch odds. Airdrop slice = implied value &times; drop share &times; your deposit / TVL. Net = slice &minus; the farm plan's fees.</div>
+  </section>
+  <section class="table-wrap">
+    <table id="board">
+      <thead><tr>
+        <th data-sort="rank">#</th>
+        <th data-sort="name">Protocol</th>
+        <th data-sort="tvl">TVL</th>
+        <th data-sort="change7d">7D</th>
+        <th data-sort="ageDays">No token for</th>
+        <th data-sort="launchOdds">Launch odds</th>
+        <th data-sort="implied_value_usd">Implied value</th>
+        <th data-sort="slice">Airdrop slice</th>
+        <th data-sort="net">Net of fees</th>
+        <th data-sort="verdict">Verdict</th>
+        <th>Farm plan</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </section>
+  <p class="foot">A protocol is shown as recording no token when its DefiLlama record carries no ticker, CoinGecko id or market cap; the record is not proof it has none. Implied values are this model's claim from the snapshot's own figures, never a price. Model radar-tusinap-2. No network: every byte on this page comes from the snapshot.</p>
 </main>
-
-<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Protocol detail"></aside>
-<div class="scrim" id="scrim" hidden></div>
-
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-in" id="drawer-in"></div>
+</aside>
 <script src="../data.js"></script>
 <script src="app.js"></script>
 </body>

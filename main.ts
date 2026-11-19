@@ -1,11 +1,14 @@
 // Token Radar's entrypoint (Node 22, standard library only).
 //
-// Reads the sealed snapshot, scores every pre-token protocol with the model
-// in lib/radar.ts, writes the ranked board to /output/board.json and the
-// dashboard's dataset to /output/data.js, copies this repository's dashboard/
-// and screenshots/ to /output, and writes /output/dossier.json last with the
-// vendored make.fun library (the scorer rebuilds it from the same /output and
-// compares bytes, so the dossier must be written after everything it covers).
+// Reads the sealed snapshot, scores every pre-token protocol with the
+// calibrated model in lib/radar.ts (radar-tusinap-2: a power law fitted on
+// the snapshot's traded tokens, sector and momentum adjustments, and launch
+// odds from the rankable pool), writes the ranked board to
+// /output/board.json and the dashboard's dataset to /output/data.js, copies
+// this repository's dashboard/ and screenshots/ to /output, and writes
+// /output/dossier.json last with the vendored make.fun library (the scorer
+// rebuilds it from the same /output and compares bytes, so the dossier must
+// be written after everything it covers).
 //
 // Local run:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input <snapshot.json|directory>
@@ -87,6 +90,7 @@ writeFileSync(
 );
 
 process.stdout.write(
-  `token radar: ${snapshot.protocols.length} protocols, ${snapshot.watchlist.length} on the watchlist, ${board.length} rows scored (${data.early_size} early, ${data.live_size} live set aside)\n` +
+  `token radar: ${snapshot.protocols.length} protocols, ${snapshot.watchlist.length} on the watchlist, ${board.length} rows scored (${data.earlySize} early, ${data.liveSize} live set aside)\n` +
+    `token radar: fit log10(mcap) = ${data.fit.intercept.toFixed(3)} + ${data.fit.slope.toFixed(3)} x log10(TVL) on ${data.fit.n} traded tokens\n` +
     `token radar: wrote ${join(out, 'board.json')}, ${join(out, 'data.js')}, ${join(out, 'dashboard')}, ${join(out, 'screenshots')} (${shots.length} images) and ${join(out, 'dossier.json')}\n`,
 );
