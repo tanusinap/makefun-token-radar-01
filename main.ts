@@ -1,4 +1,7 @@
-// Token Radar's entrypoint (Node 22, standard library only).
+// Token Radar's entrypoint (Node 22, standard library only). v3 keeps the
+// v2 model (radar-tusinap-2) byte for byte and rebuilds the presentation:
+// category-specific farm plans, top picks, chain and category breakdowns,
+// and a farm portfolio view on the dashboard.
 //
 // Reads the sealed snapshot, scores every pre-token protocol with the
 // calibrated model in lib/radar.ts (radar-tusinap-2: a power law fitted on

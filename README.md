@@ -7,7 +7,14 @@
 A token launch radar: 198 pre-token protocols ranked by an implied value
 from a model fitted on the snapshot's own traded tokens, with a concrete
 farm plan and net-of-fees economics for each one and a sortable, filterable
-dashboard that shows the model's out-of-sample validation.
+dashboard that shows the model's out-of-sample validation, the top picks
+to farm, the board's value by chain and category, and a farm portfolio.
+
+v3 keeps the v2 model (radar-tusinap-2) exactly: a leave-one-out study of
+every added feature and robust method found nothing that beats plain OLS
+on the 128 traded tokens (median miss x3.40), so v3 spends its effort on
+presentation instead. Ten categories now carry their own farm-plan
+template (v2 had four); the rest of the board keeps the generic plan.
 
 ## Run it
 
@@ -45,6 +52,26 @@ leave-one-out backtest of the value model (flat multiple x5.09, + size
 curve x3.40, + sector x3.55, + momentum x3.49 median miss; 45% of
 held-out caps priced within 3x) and a range check (51% of held-out caps
 inside the printed range).
+
+## What v3 changes (presentation only)
+
+The model, the fit, the launch odds and every implied value are identical
+to v2: the board's 198 rows rank in the same order at the same values.
+What changes is what the reader sees:
+
+- Farm plans: six more categories carry their own template (Risk Curators,
+  Onchain Capital Allocator, Derivatives, CDP, Yield Aggregator, Basis
+  Trading), so 91 more rows get a plan written for their product instead
+  of the generic one. Every step still states its cost and its time.
+- Top picks: the five FARM verdicts with the best net per hour, at the
+  current plan size and drop share.
+- Breakdowns: the board's implied value by chain and by category, as bar
+  charts, so concentration is visible at a glance.
+- Farm portfolio: farming the top five picks together, with total
+  deposits, fees, hours, expected net and net per hour.
+- Plan sizes: $100 joins $1,000 and $10,000, so small farmers see their
+  own economics. Each row also carries a risk tier (Established, Growing,
+  Early) from its TVL and age, shown in the detail drawer.
 
 ---
 

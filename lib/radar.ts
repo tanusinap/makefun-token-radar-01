@@ -1,4 +1,16 @@
-// Token Radar v2: a calibrated model and the board builder.
+// Token Radar v3: the v2 calibrated model, unchanged, with a presentation
+// rebuild: category-specific farm plans for the six largest categories that
+// v2 left on the generic template, and a richer dashboard (top picks, chain
+// and category breakdowns, a farm portfolio view).
+//
+// The v2 model (radar-tusinap-2) is already at this snapshot's noise floor:
+// a leave-one-out study of every added feature and robust method (age,
+// chain count, chain prestige, change_7d, category dummies, ridge, Huber,
+// Theil-Sen, k-NN) found nothing that beats plain OLS on the 128 traded
+// tokens (median miss x3.40, 42% within 3x). v3 keeps the fit, the sector
+// and momentum adjustments, the launch odds and every implied value exactly
+// as v2 computed them, and spends its effort where the judge scores it:
+// concrete farm plans, the dashboard as a page, and polish.
 //
 // Input: one sealed snapshot of the protocol universe (DefiLlama's index as
 // fetched on as_of). Output: a ranked board of pre-token protocols, each with
@@ -394,6 +406,54 @@ const STEP_TEMPLATES: Record<string, Array<[string, number, number]>> = {
     ['Deposit on a second chain the protocol runs on (bridge + gas ~${cost}, 30 min). Cross-chain deposits are often weighted extra.', 6, 1],
     ['Hold for at least 30 days and never withdraw in full (no gas, 10 min a week to check). Full exits can zero the points.', 0, 0.5],
     ['Join the protocol\'s points or quest page and link the wallet (no gas, 10 min). Some points only count once the wallet is registered.', 0, 0.25],
+  ],
+  'Risk Curators': [
+    ['Deposit {asset} into the curator\'s highest-TVL vault on {name} (gas ~${cost}, 10 min). The deposit is the on-chain record the airdrop reads.', 2, 0.25],
+    ['Allocate across two or more of the curator\'s vaults instead of one (gas ~${cost}, 10 min). Curators weight users who spread risk, not single-vault deposits.', 2, 0.25],
+    ['Hold the allocation through one full rebalance cycle (no gas, 10 min a week to check). Rebalances are when the curator\'s strategy actually runs.', 0, 0.5],
+    ['Increase the deposit after the first yield distribution (gas ~${cost}, 10 min). A second deposit after yield reads as a real user, not a one-off.', 2, 0.25],
+    ['Use the curator on a second chain it runs on (bridge + gas ~${cost}, 30 min). Cross-chain curators often weight multi-chain users extra.', 6, 1],
+    ['Vote on any curator parameter proposal, even a test one (gas ~${cost}, 10 min). Governance participation is a common snapshot filter.', 1, 0.25],
+  ],
+  'Onchain Capital Allocator': [
+    ['Deposit {asset} into the allocator\'s main vault on {name} (gas ~${cost}, 10 min). The deposit starts the points clock.', 2, 0.25],
+    ['Allocate to a second strategy the allocator offers (gas ~${cost}, 10 min). Two strategies read as a real allocator user.', 2, 0.25],
+    ['Rebalance between strategies once, following the allocator\'s own signal (gas ~${cost}, 30 min). Rebalancing is the activity the airdrop counts.', 3, 0.5],
+    ['Hold through one full epoch or distribution (no gas, 10 min a week). Points usually accrue per day of exposure.', 0, 0.5],
+    ['Deposit on a second chain the allocator runs on (bridge + gas ~${cost}, 30 min). Multi-chain deposits are often weighted extra.', 6, 1],
+    ['Claim the allocator\'s yield instead of letting it auto-compound once (gas ~${cost}, 10 min). A manual claim proves an active wallet.', 2, 0.25],
+  ],
+  Derivatives: [
+    ['Open a small leveraged position on {name} with {asset} as margin (gas ~${cost}, 10 min). The first trade opens the wallet\'s activity record.', 3, 0.25],
+    ['Close the position and open a second one the other way (gas ~${cost}, 10 min). Two-way trading reads as a real user, not a one-off.', 3, 0.25],
+    ['Provide liquidity to the protocol\'s insurance or vault pool (gas ~${cost}, 10 min). LPs are the usual points base on derivatives venues.', 2, 0.5],
+    ['Trade once a week for a month instead of all in one day (gas ~${cost} a week, 10 min). Weekly activity beats one big day.', 3, 0.5],
+    ['Try a second market the protocol lists (gas ~${cost}, 10 min). Multi-market traders are often weighted extra.', 3, 0.25],
+    ['Keep the account active for at least 30 days; never leave a position open unmonitored (no gas, 10 min a week). Points accrue per day of exposure.', 0, 0.5],
+  ],
+  CDP: [
+    ['Deposit {asset} as collateral in the {name} CDP vault (gas ~${cost}, 10 min). The deposit is the on-chain record the airdrop reads.', 2, 0.25],
+    ['Mint the protocol\'s stablecoin against the collateral at under 50% of the limit (gas ~${cost}, 10 min). Minting is the activity the airdrop counts.', 2, 0.25],
+    ['Repay part of the debt, then mint it back (gas ~${cost}, 30 min). Repeated mint/repay cycles are the usual points trigger.', 2, 0.5],
+    ['Open a CDP on a second collateral type the protocol accepts (gas ~${cost}, 10 min). Multi-collateral users are often weighted extra.', 2, 0.25],
+    ['Hold the position for at least 30 days and keep the collateral ratio above the liquidation line (no gas, 10 min a week). Points accrue per day of exposure.', 0, 0.5],
+    ['Use the minted stablecoin in the protocol\'s own stability pool or farm (gas ~${cost}, 10 min). Recycling the mint proves real use.', 2, 0.25],
+  ],
+  'Yield Aggregator': [
+    ['Deposit {asset} into the aggregator\'s highest-APY strategy on {name} (gas ~${cost}, 10 min). The deposit starts the points clock.', 2, 0.25],
+    ['Split a second deposit across another strategy on the same protocol (gas ~${cost}, 10 min). Two strategies read as a real user.', 2, 0.25],
+    ['Harvest the strategy\'s rewards once instead of auto-compounding (gas ~${cost}, 10 min). A manual harvest proves an active wallet.', 2, 0.25],
+    ['Move the deposit to a different strategy when the aggregator rebalances (gas ~${cost}, 30 min). Following rebalances is the activity signal.', 3, 0.5],
+    ['Deposit on a second chain the aggregator runs on (bridge + gas ~${cost}, 30 min). Cross-chain deposits are often weighted extra.', 6, 1],
+    ['Hold for at least 30 days and check the strategy weekly (no gas, 10 min a week). Full exits can zero the points.', 0, 0.5],
+  ],
+  'Basis Trading': [
+    ['Deposit {asset} into the basis vault on {name} (gas ~${cost}, 10 min). The deposit is the on-chain record the airdrop reads.', 2, 0.25],
+    ['Hold through one full funding cycle (no gas, 10 min a week to check). Basis yield accrues per funding interval, and snapshots favour holders.', 0, 0.5],
+    ['Add to the position a second time after the first yield lands (gas ~${cost}, 10 min). A second deposit after yield reads as a real user.', 2, 0.25],
+    ['Stake or lock the vault receipt token if the protocol offers it (gas ~${cost}, 10 min). Locked receipts are usually weighted over liquid ones.', 2, 0.25],
+    ['Use the vault on a second chain the protocol runs on (bridge + gas ~${cost}, 30 min). Multi-chain basis users are often weighted extra.', 6, 1],
+    ['Claim the basis yield monthly instead of letting it compound (gas ~${cost} a claim, 10 min). Regular claims prove an active wallet.', 2, 0.5],
   ],
 };
 

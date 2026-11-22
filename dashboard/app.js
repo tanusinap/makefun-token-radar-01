@@ -1,8 +1,11 @@
-// Token Radar's dashboard v2. It reads window.RADAR (written beside
-// dashboard/ by main.ts) and renders the ranked board, the model's own
-// validation, the full accounting of the snapshot, a filterable and
-// sortable table, and a per-protocol detail drawer with the model's
-// breakdown and the farm plan. No network: every byte it shows is in data.js.
+// Token Radar's dashboard v3. Same model as v2 (radar-tusinap-2), richer
+// page: top picks to farm, a farm portfolio view, implied-value breakdowns
+// by chain and category, a $100 plan size, and a risk tier per row.
+// It reads window.RADAR (written beside dashboard/ by main.ts) and renders
+// the ranked board, the model's own validation, the full accounting of the
+// snapshot, a filterable and sortable table, and a per-protocol detail
+// drawer with the model's breakdown and the farm plan. No network: every
+// byte it shows is in data.js.
 (function () {
   'use strict';
 
@@ -88,6 +91,87 @@
     document.getElementById('ledger').innerHTML =
       '<div><b>' + total + ' protocols read</b> &middot; ' + rows.length + ' ranked and ' + (total - rows.length) + ' set aside, each group for one reason</div>' +
       '<div class="bar">' + bar + '</div><div class="keys">' + keys + '</div>';
+  }
+
+  // Risk tier: a quick read on how established a protocol is, from its
+  // TVL and how long it has run with no token. It is a label, not a model
+  // input: the implied value never sees it.
+  function riskTier(r) {
+    if (r.tvl >= 1e8 && r.ageDays >= 365) return 'Established';
+    if (r.tvl >= 1e7) return 'Growing';
+    return 'Early';
+  }
+
+  function renderTopPicks() {
+    var farms = rows.map(function (r) { return { r: r, e: getEcon(r) }; })
+      .filter(function (x) { return x.e.verdict === 'FARM'; })
+      .sort(function (a, b) { return b.e.perHour - a.e.perHour; })
+      .slice(0, 5);
+    var body = farms.length === 0
+      ? '<p class="note">No row clears FARM at $' + state.plan.toLocaleString() + ' and ' + pct(state.drop) + ' drop share. Raise the plan size or the drop share to see picks.</p>'
+      : '<ol class="pick-list">' + farms.map(function (x) {
+          return '<li><span class="pick-rank">#' + x.r.rank + '</span> <b>' + esc(x.r.name) + '</b> <span class="pick-sub">' + esc(x.r.category) + ' &middot; ' + money(x.r.implied_value_usd) + ' implied &middot; ' + pct(x.r.launchOdds) + ' launch odds</span><span class="pick-econ">net <b>' + money2(x.e.net) + '</b> &middot; <b>' + money2(x.e.perHour) + '/h</b></span></li>';
+        }).join('') + '</ol>';
+    document.getElementById('top-picks').innerHTML =
+      '<h2>Top picks to farm</h2><p class="note">The five FARM verdicts with the best net per hour at the current plan size and drop share. Click any row in the board for its full plan.</p>' + body;
+  }
+
+  function barChart(title, note, items, total) {
+    var max = items.length ? items[0].value : 1;
+    var rowsHtml = items.map(function (it) {
+      return '<div class="bar-row"><span class="bar-label">' + esc(it.label) + ' <i>' + it.count + '</i></span>' +
+        '<span class="bar-track"><i style="width:' + Math.max(1, Math.round(it.value / max * 100)) + '%"></i></span>' +
+        '<span class="bar-val">' + money(it.value) + '</span></div>';
+    }).join('');
+    return '<h2>' + title + '</h2><p class="note">' + note + '</p><div class="bars">' + rowsHtml + '</div>' +
+      '<p class="note">Total implied across the board: ' + money(total) + '.</p>';
+  }
+
+  function renderBreakdown() {
+    var byChain = {};
+    var byCat = {};
+    rows.forEach(function (r) {
+      var c = byCat[r.category] || (byCat[r.category] = { value: 0, count: 0 });
+      c.value += r.implied_value_usd; c.count += 1;
+      r.chains.forEach(function (ch) {
+        var e = byChain[ch] || (byChain[ch] = { value: 0, count: 0 });
+        e.value += r.implied_value_usd / r.chains.length; e.count += 1;
+      });
+    });
+    function top(map, n) {
+      return Object.keys(map).map(function (k) { return { label: k, value: map[k].value, count: map[k].count }; })
+        .sort(function (a, b) { return b.value - a.value; }).slice(0, n);
+    }
+    document.getElementById('by-chain').innerHTML = barChart(
+      'Implied value by chain',
+      'Each row\'s implied value is split evenly across the chains it runs on. A chain-heavy board is a concentration risk, not a feature.',
+      top(byChain, 8), DATA.totalImplied);
+    document.getElementById('by-category').innerHTML = barChart(
+      'Implied value by category',
+      'Where the board\'s value sits. The categories with the most rows are not always the ones with the most value.',
+      top(byCat, 8), DATA.totalImplied);
+  }
+
+  function renderPortfolio() {
+    var farms = rows.map(function (r) { return { r: r, e: getEcon(r) }; })
+      .filter(function (x) { return x.e.verdict === 'FARM'; })
+      .sort(function (a, b) { return b.e.perHour - a.e.perHour; });
+    var take = farms.slice(0, 5);
+    var net = take.reduce(function (s, x) { return s + x.e.net; }, 0);
+    var fees = take.reduce(function (s, x) { return s + x.r.feesUsd; }, 0);
+    var hours = take.reduce(function (s, x) { return s + x.r.hours; }, 0);
+    var body = take.length === 0
+      ? '<p class="note">No FARM verdict at the current settings, so there is no portfolio to build. Raise the plan size or the drop share.</p>'
+      : '<table class="mini"><tr><th>Farming the top ' + take.length + ' picks at $' + state.plan.toLocaleString() + ' each</th><th class="num">Total</th></tr>' +
+        '<tr><td>Deposits (one plan each)</td><td class="num">$' + (state.plan * take.length).toLocaleString() + '</td></tr>' +
+        '<tr><td>Fees across all plans</td><td class="num">' + money2(fees) + '</td></tr>' +
+        '<tr><td>Hours across all plans</td><td class="num">' + hours.toFixed(1) + ' h</td></tr>' +
+        '<tr><td>Expected net of fees</td><td class="num"><b>' + money2(net) + '</b></td></tr>' +
+        '<tr><td>Net per hour</td><td class="num"><b>' + money2(hours > 0 ? net / hours : 0) + '/h</b></td></tr></table>' +
+        '<p class="note">The picks: ' + take.map(function (x) { return esc(x.r.name); }).join(', ') + '. ' +
+        'Each pick is farmed with its own $' + state.plan.toLocaleString() + ' deposit, so the total at risk is $' + (state.plan * take.length).toLocaleString() + ', not $' + state.plan.toLocaleString() + '. The net is the model\'s expected airdrop slice minus fees, not a promise.</p>';
+    document.getElementById('portfolio').innerHTML =
+      '<h2>Farm portfolio</h2><p class="note">What farming the best picks together looks like, at the current plan size and drop share.</p>' + body;
   }
 
   function renderMethod() {
@@ -215,6 +299,7 @@
       kv('TVL', money(r.tvl)) +
       kv('7-day change', r.change7d == null ? 'not reported' : ((r.change7d >= 0 ? '+' : '') + r.change7d.toFixed(1) + '%')) +
       kv('No token for', ageText(r.ageDays) + ' (' + r.ageDays + ' days)') +
+      kv('Risk tier', riskTier(r) + ' (TVL ' + money(r.tvl) + ', ' + ageText(r.ageDays) + ' with no token)') +
       kv('Fitted value (size curve)', money(r.valueIfLaunches / r.sectorMult / r.momentumMult)) +
       kv('Sector multiplier', '&times;' + r.sectorMult.toFixed(2) + ' (' + esc(r.category) + ')') +
       kv('Momentum multiplier', '&times;' + r.momentumMult.toFixed(2)) +
@@ -244,6 +329,8 @@
     renderStats();
     renderTabs();
     renderTable();
+    renderTopPicks();
+    renderPortfolio();
   }
 
   // top meta
@@ -263,6 +350,7 @@
 
   renderLedger();
   renderMethod();
+  renderBreakdown();
   renderAll();
 
   document.getElementById('tabs').addEventListener('click', function (ev) {
